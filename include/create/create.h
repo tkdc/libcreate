@@ -57,9 +57,9 @@ namespace create {
 
       RobotModel model;
 
-      uint8_t mainMotorPower;
-      uint8_t sideMotorPower;
-      uint8_t vacuumMotorPower;
+      float mainMotorPower;
+      float sideMotorPower;
+      float vacuumMotorPower;
 
       // LEDs
       uint8_t debrisLED;
@@ -214,22 +214,22 @@ namespace create {
        * \param power is in the range [-1, 1]
        * \return true if successful, false otherwise
        */
-      bool setSideMotor(const float& power);
-
+      //bool setSideMotor(const float& power);
+      bool setSideMotor(const float& val_act, const float& side);
       /**
        * \brief Set the power to the main brush motor.
        * \param power is in the range [-1, 1]
        * \return true if successful, false otherwise
        */
-      bool setMainMotor(const float& power);
-
+      //bool setMainMotor(const float& power);
+      bool setMainMotor(const float& val_act, const float& main);
       /**
        * \brief Set the power to the vacuum motor.
        * \param power is in the range [0, 1]
        * \return true if successful, false otherwise
        */
-      bool setVacuumMotor(const float& power);
-
+      //bool setVacuumMotor(const float& power);
+      bool setVacuumMotor(const float& val_act, const float& vacuum);
       /**
        * \brief Set the power of all motors.
        * \param mainPower in the range [-1, 1]

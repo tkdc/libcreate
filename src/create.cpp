@@ -4,6 +4,7 @@
 #include <cmath>
 #include <ctime>
 #include <assert.h>
+#include <stdio.h>
 
 #include "create/create.h"
 
@@ -50,6 +51,11 @@ namespace create {
     } else {
       serial = boost::make_shared<SerialStream>(data);
     }
+    printf("-- libcreate tk 1.0 --\n");
+    printf("getVersion: %i\n",model.getVersion());
+    printf("getAxleLength: %f\n",model.getAxleLength());
+    printf("getWheelDiameter: %f\n",model.getWheelDiameter());
+    printf("V_3_TICKS_PER_REV: %f\n",util::V_3_TICKS_PER_REV);
   }
 
   Create::Create(RobotModel m) : model(m) {
@@ -451,39 +457,65 @@ namespace create {
   bool Create::drive(const float& xVel, const float& angularVel) {
     // Compute left and right wheel velocities
     float leftVel = xVel - ((model.getAxleLength() / 2.0) * angularVel);
-    float rightVel = xVel + ((model.getAxleLength() / 2.0) * angularVel);
+    float rightVel = xVel + ((model.getAxleLength() / 2.0) * angularVel)*1;
     return driveWheels(leftVel, rightVel);
   }
 
   bool Create::setAllMotors(const float& main, const float& side, const float& vacuum) {
-    if (main < -1.0 || main > 1.0 ||
-        side < -1.0 || side > 1.0 ||
-        vacuum < -1.0 || vacuum > 1.0)
+    if (main < 0.0 || main > 1.0 ||
+        side < 0.0 || side > 1.0 ||
+        vacuum < 0.0 || vacuum > 1.0)
       return false;
 
-    mainMotorPower = roundf(main * 127);
-    sideMotorPower = roundf(side * 127);
-    vacuumMotorPower = roundf(vacuum * 127);
+    mainMotorPower = main;
+    sideMotorPower = side;
+    vacuumMotorPower = vacuum;
 
     uint8_t cmd[4] = { OC_MOTORS_PWM,
-                       mainMotorPower,
-                       sideMotorPower,
-                       vacuumMotorPower
+                       static_cast<uint8_t>(roundf(main * 127)),
+                       static_cast<uint8_t>(roundf(side * 127)),
+                       static_cast<uint8_t>(roundf(vacuum * 127))
                      };
-
+    
+    printf("Create: Main:%.2f Side:%.2f Vacu:%.2f\n",mainMotorPower,sideMotorPower,vacuumMotorPower);
     return serial->send(cmd, 4);
+    
   }
 
-  bool Create::setMainMotor(const float& main) {
-    return setAllMotors(main, sideMotorPower, vacuumMotorPower);
+  bool Create::setMainMotor(const float& val_act, const float& main) {
+      float mainset = 0;
+      if (val_act > 0.5) {
+          mainset = mainMotorPower + main;
+      } else if (val_act < -0.5){
+          mainset = mainMotorPower - main;
+      } else {
+          mainset = main;
+      }
+    return setAllMotors(mainset, sideMotorPower, vacuumMotorPower);
   }
 
-  bool Create::setSideMotor(const float& side) {
-    return setAllMotors(mainMotorPower, side, vacuumMotorPower);
+  bool Create::setSideMotor(const float& val_act, const float& side) {
+    float sideset = 0;
+        if (val_act > 0.5) {
+            sideset = sideMotorPower + side;
+        } else if (val_act < -0.5){
+            sideset = sideMotorPower - side;
+        } else {
+            sideset = side;
+        }
+    return setAllMotors(mainMotorPower, sideset, vacuumMotorPower);
   }
 
-  bool Create::setVacuumMotor(const float& vacuum) {
-    return setAllMotors(mainMotorPower, sideMotorPower, vacuum);
+  bool Create::setVacuumMotor(const float& val_act, const float& vacuum) {
+    float vacset = 0;
+        if (val_act > 0.5) {
+            vacset = vacuumMotorPower + vacuum;
+        } else if (val_act < -0.5){
+            vacset = vacuumMotorPower - vacuum;
+        } else {
+            vacset = vacuum;
+        }
+    return setAllMotors(mainMotorPower, sideMotorPower, vacset);
   }
 
   bool Create::updateLEDs() {
